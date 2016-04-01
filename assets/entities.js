@@ -7,18 +7,10 @@ Game.Mixins.Moveable = {
     tryMove: function(x, y, map) {
         var tile = map.getTile(x, y);
         var target = map.getEntityAt(x, y);
-        // If an entity was present at the tile
+        // If an entity was present at the tile, then we
+        // can't move there
         if (target) {
-            // If we are an attacker, try to attack
-            // the target
-            if (this.hasMixin('Attacker')) {
-                this.attack(target);
-                return true;
-            } else {
-                // If not nothing we can do, but we can't
-                // move to the tile
-                return false;
-            }
+            return false;
         // Check if we can walk on the tile
         // and if so simply walk onto it
         } else if (tile.isWalkable()) {        
@@ -55,42 +47,16 @@ Game.Mixins.FungusActor = {
     act: function() { }
 }
 
-Game.Mixins.Destructable = {
-    name: 'Destructable',
-    init: function() {
-        this._hp = 1;
-    },
-    takeDamage: function(attacker, damage) {
-        this._hp -= damage;
-        // If have 0 or less HP, then remove ourseles from the map
-        if (this._hp <= 0) {
-            this.getMap().removeEntity(this);
-        }
-    }
-}
-
-Game.Mixins.SimpleAttacker = {
-    name: 'SimpleAttacker',
-    groupName: 'Attacker',
-    attack: function(target) {
-        // Only remove the entity if they were attackable
-        if (target.hasMixin('Destructible')) {
-            target.takeDamage(this, 1);
-        }
-    }
-}
-
 // Player template
 Game.PlayerTemplate = {
     character: '@',
     foreground: 'white',
     background: 'black',
-    mixins: [Game.Mixins.Moveable, Game.Mixins.PlayerActor,
-             Game.Mixins.SimpleAttacker, Game.Mixins.Destructible]
+    mixins: [Game.Mixins.Moveable, Game.Mixins.PlayerActor]
 }
 // Fungus template
 Game.FungusTemplate = {
     character: 'F',
     foreground: 'green',
-    mixins: [Game.Mixins.FungusActor, Game.Mixins.Destructible]
+    mixins: [Game.Mixins.FungusActor]
 }
