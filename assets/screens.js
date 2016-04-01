@@ -100,7 +100,7 @@ Game.Screen.playScreen = {
                     entity.getBackground()
                 );
             }
-        },
+        }
         // Get the messages in the player's queue and render them
         var messages = this._player.getMessages();
         var messageY = 0;
@@ -111,12 +111,11 @@ Game.Screen.playScreen = {
                 messageY,
                 '%c{white}%b{black}' + messages[i]
             );
-        },
+        }
         // Render player HP 
         var stats = '%c{white}%b{black}';
         stats += vsprintf('HP: %d/%d ', [this._player.getHp(), this._player.getMaxHp()]);
         display.drawText(0, screenHeight, stats);
-    },
     },
     handleInput: function(inputType, inputData) {
         if (inputType === 'keydown') {
