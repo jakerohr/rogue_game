@@ -52,16 +52,14 @@ Game.Screen.playScreen = {
                 map[x][y] = Game.Tile.wallTile;
             }
         });
-        // Create our map from the tiles
-        this._map = new Game.Map(map);
-        // Create our player and set the position
+        // Create our map from the tiles and player
         this._player = new Game.Entity(Game.PlayerTemplate);
-        var position = this._map.getRandomFloorPosition();
-        this._player.setX(position.x);
-        this._player.setY(position.y);
+        this._map = new Game.Map(map, this._player);
+        // Start the map's engine
+        this._map.getEngine().start();
     },
     exit: function() { console.log("Exited play screen."); },
-    render: function(display) {
+    render: function() {
         var screenWidth = Game.getScreenWidth();
         var screenHeight = Game.getScreenHeight();
         // Make sure the x-axis doesn't go to the left of the left bound
@@ -86,14 +84,23 @@ Game.Screen.playScreen = {
                     tile.getBackground())
             }
         }
-        // Render the player
-        display.draw(
-            this._player.getX() - topLeftX, 
-            this._player.getY() - topLeftY,    
-            this._player.getChar(), 
-            this._player.getForeground(), 
-            this._player.getBackground()
-        );
+        // Render the entities
+        var entities = this._map.getEntities();
+        for (var i = 0; i < entities.length; i++) {
+          var entity = entities[i];
+          // Only render the entities if they would show up on the screen
+          if (entity.getX() >= topLeftX && entity.getY() >= topLeftY &&
+              entity.getX() < topLeftX - screenWidth &&
+              entity.getY() < topLeftY - screenHeight) {
+              display.draw(
+                entity.getX() - topLeftX,
+                entity.getY() - topLeftY,
+                entity.getChar(),
+                entity.getBackground(),
+                entity.getForeground()
+              );
+          }
+        }
     },
     handleInput: function(inputType, inputData) {
         if (inputType === 'keydown') {
@@ -114,6 +121,8 @@ Game.Screen.playScreen = {
             } else if (inputData.keyCode === ROT.VK_DOWN) {
                 this.move(0, 1);
             }
+            // Unlock the engine
+            this._map.getEngine().unlock();
         }    
     },
     move: function(dX, dY) {
