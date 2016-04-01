@@ -45,7 +45,9 @@ Game.Mixins.PlayerActor = {
         Game.refresh();
         // Lock the engine and wait asynchronously
         // for the player to press a key.
-        this.getMap().getEngine().lock();        
+        this.getMap().getEngine().lock();
+        // Clear the message queue
+        this.clearMessages();        
     }
 }
 
@@ -76,6 +78,11 @@ Game.Mixins.FungusActor = {
                         entity.setY(this.getY() + yOffset);
                         this.getMap().addEntity(entity);
                         this._growthsRemaining--;
+
+                        // Send a message nearby!
+                        Game.sendMessageNearby(this.getMap(),
+                            entity.getX(), entity.getY(),
+                            'The fungus is spreading!');
                     }
                 }
             }
@@ -186,5 +193,22 @@ Game.sendMessage = function(recipient, message, args) {
             message = vsprintf(message, args);
         }
         recipient.receiveMessage(message);
+    }
+}
+
+Game.sendMessageNearby = function(map, centerX, centerY, message, args) {
+    // If args were passed, then we format the message, else
+    // no formatting is necessary
+    if (args) {
+        message = vsprintf(message, args);
+    }
+    // Get the nearby entities
+    entities = map.getEntitiesWithinRadius(centerX, centerY, 5);
+    // Iterate through nearby entities, sending the message if
+    // they can receive it.
+    for (var i = 0; i < entities.length; i++) {
+        if (entities[i].hasMixin(Game.Mixins.MessageRecipient)) {
+            entities[i].receiveMessage(message);
+        }
     }
 }
