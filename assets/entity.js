@@ -28,7 +28,7 @@ Game.Entity = function(properties) {
         this._attachedMixins[mixins[i].name] = true;
         // If a group name is present, add it
         if (mixins[i].groupName) {
-          this._attachedMixinGroups[mixins[i].groupName] = true
+            this._attachedMixinGroups[mixins[i].groupName] = true;
         }
         // Finally call the init function if there is one
         if (mixins[i].init) {
@@ -40,11 +40,11 @@ Game.Entity = function(properties) {
 Game.Entity.extend(Game.Glyph);
 
 Game.Entity.prototype.hasMixin = function(obj) {
-    // Allow passing the mixin itself or the name as a string
+    // Allow passing the mixin itself or the name / group name as a string
     if (typeof obj === 'object') {
         return this._attachedMixins[obj.name];
     } else {
-        return this._attachedMixins[obj] || this._attachedMixinGroups[obj]
+        return this._attachedMixins[obj] || this._attachedMixinGroups[obj];
     }
 }
 
@@ -57,6 +57,9 @@ Game.Entity.prototype.setX = function(x) {
 Game.Entity.prototype.setY = function(y) {
     this._y = y;
 }
+Game.Entity.prototype.setMap = function(map) {
+    this._map = map;
+}
 Game.Entity.prototype.getName = function() {
     return this._name;
 }
@@ -66,31 +69,6 @@ Game.Entity.prototype.getX = function() {
 Game.Entity.prototype.getY   = function() {
     return this._y;
 }
-Game.Entity.prototype.setMap = function(map) {
-  this._map = map;
-}
 Game.Entity.prototype.getMap = function() {
-  return this._map;
-};
-
-var PlayerMoveableMixin = {
-  name: 'PlayerMoveable',
-  groupName: 'Moveable',
-  tryMove: function(x, y) {
-
-  }
-}
-var MoleratMoveableMixin = {
-  name: 'MoleratMoveable',
-  groupName: 'Moveable',
-  tryMove: function(x, y) {
-
-  }
-}
-var GhostMoveableMixin = {
-  name: 'GhostMoveable',
-  groupName: 'Moveable',
-  tryMove: function(x, y) {
-
-  }
+    return this._map;
 }
