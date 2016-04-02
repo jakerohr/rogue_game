@@ -64,6 +64,11 @@ Game.Entity.prototype.setZ = function(z) {
 Game.Entity.prototype.setMap = function(map) {
     this._map = map;
 }
+Game.Entity.prototype.setPosition = function(x, y, z) {
+    this._x = x;
+    this._y = y;
+    this._z = z;
+}
 Game.Entity.prototype.getName = function() {
     return this._name;
 }
@@ -78,9 +83,4 @@ Game.Entity.prototype.getZ = function() {
 }
 Game.Entity.prototype.getMap = function() {
     return this._map;
-}
-Game.Entity.prototype.setPosition = function(x, y, z) {
-    this._x = x;
-    this._y = y;
-    this._z = z;
 }

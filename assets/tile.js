@@ -37,6 +37,8 @@ Game.Tile.stairsDownTile = new Game.Tile({
     foreground: 'white',
     isWalkable: true
 });
+
+// Helper function
 Game.getNeighborPositions = function(x, y) {
     var tiles = [];
     // Generate all possible offsets

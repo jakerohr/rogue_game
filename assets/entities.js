@@ -52,6 +52,7 @@ Game.Mixins.Moveable = {
     }
 }
 
+
 // Main player's actor mixin
 Game.Mixins.PlayerActor = {
     name: 'PlayerActor',
@@ -63,7 +64,7 @@ Game.Mixins.PlayerActor = {
         // for the player to press a key.
         this.getMap().getEngine().lock();
         // Clear the message queue
-        this.clearMessages();        
+        this.clearMessages();
     }
 }
 
@@ -91,8 +92,7 @@ Game.Mixins.FungusActor = {
                                                    this.getY() + yOffset,
                                                    this.getZ())) {
                         var entity = new Game.Entity(Game.FungusTemplate);
-                        entity.setPosition(this.getX() + xOffset, 
-                            this.getY() + yOffset, this.getZ());
+                        entity.setPosition(this.getX() + xOffset, this.getY() + yOffset, this.getZ());
                         this.getMap().addEntity(entity);
                         this._growthsRemaining--;
                         // Send a message nearby!
@@ -106,6 +106,36 @@ Game.Mixins.FungusActor = {
     }
 }
 
+// This signifies our entity can attack basic destructible enities
+Game.Mixins.Attacker = {
+    name: 'Attacker',
+    groupName: 'Attacker',
+    init: function(template) {
+        this._attackValue = template['attackValue'] || 1;
+    },
+    getAttackValue: function() {
+        return this._attackValue;
+    },
+    attack: function(target) {
+        // If the target is destructible, calculate the damage
+        // based on attack and defense value
+        if (target.hasMixin('Destructible')) {
+            var attack = this.getAttackValue();
+            var defense = target.getDefenseValue();
+            var max = Math.max(0, attack - defense);
+            var damage = 1 + Math.floor(Math.random() * max);
+
+            Game.sendMessage(this, 'You strike the %s for %d damage!', 
+                [target.getName(), damage]);
+            Game.sendMessage(target, 'The %s strikes you for %d damage!', 
+                [this.getName(), damage]);
+
+            target.takeDamage(this, damage);
+        }
+    }
+}
+
+// This mixin signifies an entity can take damage and be destroyed
 Game.Mixins.Destructible = {
     name: 'Destructible',
     init: function(template) {
@@ -136,34 +166,6 @@ Game.Mixins.Destructible = {
     }
 }
 
-Game.Mixins.Attacker = {
-    name: 'Attacker',
-    groupName: 'Attacker',
-        init: function(template) {
-        this._attackValue = template['attackValue'] || 1;
-    },
-    getAttackValue: function() {
-        return this._attackValue;
-    },
-    attack: function(target) {
-        // If the target is destructible, calculate the damage
-        // based on attack and defense value
-        if (target.hasMixin('Destructible')) {
-            var attack = this.getAttackValue();
-            var defense = target.getDefenseValue();
-            var max = Math.max(0, attack - defense);
-            var damage = 1 + Math.floor(Math.random() * max);
-
-            Game.sendMessage(this, 'You strike the %s for %d damage!', 
-                [target.getName(), damage]);
-            Game.sendMessage(target, 'The %s strikes you for %d damage!', 
-                [this.getName(), damage]);
-
-            target.takeDamage(this, damage);
-        }
-    }
-}
-
 Game.Mixins.MessageRecipient = {
     name: 'MessageRecipient',
     init: function(template) {
@@ -179,6 +181,37 @@ Game.Mixins.MessageRecipient = {
         this._messages = [];
     }
 }
+
+// Message sending functions
+Game.sendMessage = function(recipient, message, args) {
+    // Make sure the recipient can receive the message 
+    // before doing any work.
+    if (recipient.hasMixin(Game.Mixins.MessageRecipient)) {
+        // If args were passed, then we format the message, else
+        // no formatting is necessary
+        if (args) {
+            message = vsprintf(message, args);
+        }
+        recipient.receiveMessage(message);
+    }
+}
+Game.sendMessageNearby = function(map, centerX, centerY, centerZ, message, args) {
+    // If args were passed, then we format the message, else
+    // no formatting is necessary
+    if (args) {
+        message = vsprintf(message, args);
+    }
+    // Get the nearby entities
+    entities = map.getEntitiesWithinRadius(centerX, centerY, centerZ, 5);
+    // Iterate through nearby entities, sending the message if
+    // they can receive it.
+    for (var i = 0; i < entities.length; i++) {
+        if (entities[i].hasMixin(Game.Mixins.MessageRecipient)) {
+            entities[i].receiveMessage(message);
+        }
+    }
+}
+
 
 // Player template
 Game.PlayerTemplate = {
@@ -197,34 +230,4 @@ Game.FungusTemplate = {
     foreground: 'green',
     maxHp: 10,
     mixins: [Game.Mixins.FungusActor, Game.Mixins.Destructible]
-}
-
-Game.sendMessage = function(recipient, message, args) {
-    // Make sure the recipient can receive the message 
-    // before doing any work.
-    if (recipient.hasMixin(Game.Mixins.MessageRecipient)) {
-        // If args were passed, then we format the message, else
-        // no formatting is necessary
-        if (args) {
-            message = vsprintf(message, args);
-        }
-        recipient.receiveMessage(message);
-    }
-}
-
-Game.sendMessageNearby = function(map, centerX, centerY, centerZ, message, args) {
-    // If args were passed, then we format the message, else
-    // no formatting is necessary
-    if (args) {
-        message = vsprintf(message, args);
-    }
-    // Get the nearby entities
-    entities = map.getEntitiesWithinRadius(centerX, centerY, centerZ, 5)
-    // Iterate through nearby entities, sending the message if
-    // they can receive it.
-    for (var i = 0; i < entities.length; i++) {
-        if (entities[i].hasMixin(Game.Mixins.MessageRecipient)) {
-            entities[i].receiveMessage(message);
-        }
-    }
 }

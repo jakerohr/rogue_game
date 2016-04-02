@@ -20,14 +20,14 @@ Game.Map = function(tiles, player) {
 }
 
 // Standard getters
+Game.Map.prototype.getDepth = function() {
+    return this._depth;
+};
 Game.Map.prototype.getWidth = function() {
     return this._width;
 };
 Game.Map.prototype.getHeight = function() {
     return this._height;
-};
-Game.Map.prototype.getDepth = function() {
-    return this._depth;
 };
 
 // Gets the tile for a given coordinate set
@@ -55,7 +55,12 @@ Game.Map.prototype.isEmptyFloor = function(x, y, z) {
            !this.getEntityAt(x, y, z);
 }
 
-// ...
+Game.Map.prototype.getEngine = function() {
+    return this._engine;
+}
+Game.Map.prototype.getEntities = function() {
+    return this._entities;
+}
 Game.Map.prototype.getEntityAt = function(x, y, z){
     // Iterate through all entities searching for one with
     // matching position
@@ -136,29 +141,4 @@ Game.Map.prototype.removeEntity = function(entity) {
     if (entity.hasMixin('Actor')) {
         this._scheduler.remove(entity);
     }
-}
-
-Game.Map.prototype.isEmptyFloor = function(x, y) {
-    // Check if the tile is floor and also has no entity
-    return this.getTile(x, y) == Game.Tile.floorTile &&
-           !this.getEntityAt(x, y);
-}
-
-Game.Map.prototype.getEntitiesWithinRadius = function(centerX, centerY, radius) {
-    results = [];
-    // Determine our bounds
-    var leftX = centerX - radius;
-    var rightX = centerX + radius;
-    var topY = centerY - radius;
-    var bottomY = centerY + radius;
-    // Iterate through our entities, adding any which are within the bounds
-    for (var i = 0; i < this._entities.length; i++) {
-        if (this._entities[i].getX() >= leftX &&
-            this._entities[i].getX() <= rightX && 
-            this._entities[i].getY() >= topY &&
-            this._entities[i].getY() <= bottomY) {
-            results.push(this._entities[i]);
-        }
-    }
-    return results;
 }
