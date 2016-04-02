@@ -146,18 +146,6 @@ Game.Map.prototype.getEntitiesWithinRadius = function(centerX, centerY,
     return results;
 };
 
-Game.Map.prototype.addEntity = function(entity) {
-    // Update the entity's map
-    entity.setMap(this);
-    // Update the map with the entity's position
-    this.updateEntityPosition(entity);
-    // Check if this entity is an actor, and if so add
-    // them to the scheduler
-    if (entity.hasMixin('Actor')) {
-       this._scheduler.add(entity, true);
-    }
-};
-
 Game.Map.prototype.getRandomFloorPosition = function(z) {
     // Randomly generate a tile which is a floor
     var x, y;
@@ -174,6 +162,30 @@ Game.Map.prototype.addEntityAtRandomPosition = function(entity, z) {
     entity.setY(position.y);
     entity.setZ(position.z);
     this.addEntity(entity);
+};
+
+Game.Map.prototype.addEntity = function(entity) {
+    // Update the entity's map
+    entity.setMap(this);
+    // Update the map with the entity's position
+    this.updateEntityPosition(entity);
+    // Check if this entity is an actor, and if so add
+    // them to the scheduler
+    if (entity.hasMixin('Actor')) {
+       this._scheduler.add(entity, true);
+    }
+};
+
+Game.Map.prototype.removeEntity = function(entity) {
+    // Remove the entity from the map
+    var key = entity.getX() + ',' + entity.getY() + ',' + entity.getZ();
+    if (this._entities[key] == entity) {
+        delete this._entities[key];
+    }
+    // If the entity is an actor, remove them from the scheduler
+    if (entity.hasMixin('Actor')) {
+        this._scheduler.remove(entity);
+    }
 };
 
 Game.Map.prototype.updateEntityPosition = function(entity, oldX, oldY, oldZ) {
@@ -197,16 +209,4 @@ Game.Map.prototype.updateEntityPosition = function(entity, oldX, oldY, oldZ) {
     }
     // Add the entity to the table of entities
     this._entities[key] = entity;
-};
-
-Game.Map.prototype.removeEntity = function(entity) {
-    // Remove the entity from the map
-    var key = entity.getX() + ',' + entity.getY() + ',' + entity.getZ();
-    if (this._entities[key] == entity) {
-        delete this._entities[key];
-    }
-    // If the entity is an actor, remove them from the scheduler
-    if (entity.hasMixin('Actor')) {
-        this._scheduler.remove(entity);
-    }
 };

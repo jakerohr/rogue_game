@@ -47,23 +47,23 @@ Game.Entity.prototype.hasMixin = function(obj) {
     } else {
         return this._attachedMixins[obj] || this._attachedMixinGroups[obj];
     }
-}
+};
 
 Game.Entity.prototype.setName = function(name) {
     this._name = name;
-}
+};
 Game.Entity.prototype.setX = function(x) {
     this._x = x;
-}
+};
 Game.Entity.prototype.setY = function(y) {
     this._y = y;
-}
+};
 Game.Entity.prototype.setZ = function(z) {
     this._z = z;
-}
+};
 Game.Entity.prototype.setMap = function(map) {
     this._map = map;
-}
+};
 Game.Entity.prototype.setPosition = function(x, y, z) {
     var oldX = this._x;
     var oldY = this._y;
@@ -79,19 +79,20 @@ Game.Entity.prototype.setPosition = function(x, y, z) {
 };
 Game.Entity.prototype.getName = function() {
     return this._name;
-}
+};
 Game.Entity.prototype.getX = function() {
     return this._x;
-}
+};
 Game.Entity.prototype.getY   = function() {
     return this._y;
-}
+};
 Game.Entity.prototype.getZ = function() {
     return this._z;
-}
+};
 Game.Entity.prototype.getMap = function() {
     return this._map;
-}
+};
+
 Game.Entity.prototype.tryMove = function(x, y, z, map) {
     var map = this.getMap();
     // Must use starting z
@@ -114,27 +115,33 @@ Game.Entity.prototype.tryMove = function(x, y, z, map) {
         }
     // If an entity was present at the tile
     } else if (target) {
-        // If we are an attacker, try to attack
-        // the target
-        if (this.hasMixin('Attacker')) {
+        // An entity can only attack if the entity has the Attacker mixin and 
+        // either the entity or the target is the player.
+        if (this.hasMixin('Attacker') && 
+            (this.hasMixin(Game.Mixins.PlayerActor) ||
+             target.hasMixin(Game.Mixins.PlayerActor))) {
             this.attack(target);
             return true;
-        } else {
-            // If not nothing we can do, but we can't 
-            // move to the tile
-            return false;
-        }
+        } 
+        // If not nothing we can do, but we can't 
+        // move to the tile
+        return false;        
     // Check if we can walk on the tile
     // and if so simply walk onto it
     } else if (tile.isWalkable()) {        
         // Update the entity's position
         this.setPosition(x, y, z);
         return true;
-    // Check if the tile is diggable, and
-    // if so try to dig it
+    // Check if the tile is diggable
     } else if (tile.isDiggable()) {
-        map.dig(x, y, z);
-        return true;
+        // Only dig if the the entity is the player
+        if (this.hasMixin(Game.Mixins.PlayerActor)) {
+            map.dig(x, y, z);
+            return true;
+        }
+        // If not nothing we can do, but we can't 
+        // move to the tile
+        return false;
     }
     return false;
 };
