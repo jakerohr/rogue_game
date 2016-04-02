@@ -1,26 +1,41 @@
 Game.Map = function(tiles, player) {
     this._tiles = tiles;
-    // cache dimensions
+    // Cache dimensions
     this._depth = tiles.length
     this._width = tiles[0].length;
     this._height = tiles[0][0].length;
-    // setup the field of visions
+    // Setup the field of visions
     this._fov = [];
     this.setupFov();
-    // create a list which will hold the entities
+    // Create a list which will hold the entities
     this._entities = [];
-    // create the engine and scheduler
+    // Create the engine and scheduler
     this._scheduler = new ROT.Scheduler.Simple();
     this._engine = new ROT.Engine(this._scheduler);
-    // add the player
+    // Add the player
     this.addEntityAtRandomPosition(player, 0);
-    // add random fungi
+    // Add random fungi
     for (var z = 0; z < this._depth; z++) {
         for (var i = 0; i < 25; i++) {
             this.addEntityAtRandomPosition(new Game.Entity(Game.FungusTemplate), z);
         }
     }
-}
+    // Setup the explored array
+    this._explored = new Array(this._depth);
+    this._setupExploredArray();
+};
+
+Game.Map.prototype._setupExploredArray = function() {
+    for (var z = 0; z < this._depth; z++) {
+        this._explored[z] = new Array(this._width);
+        for (var x = 0; x < this._width; x++) {
+            this._explored[z][x] = new Array(this._height);
+            for (var y = 0; y < this._height; y++) {
+                this._explored[z][x][y] = false;
+            }
+        }
+    }
+};
 
 // Standard getters
 Game.Map.prototype.getDepth = function() {
@@ -50,20 +65,59 @@ Game.Map.prototype.dig = function(x, y, z) {
     if (this.getTile(x, y, z).isDiggable()) {
         this._tiles[z][x][y] = Game.Tile.floorTile;
     }
-}
+};
 
 Game.Map.prototype.isEmptyFloor = function(x, y, z) {
     // Check if the tile is floor and also has no entity
     return this.getTile(x, y, z) == Game.Tile.floorTile &&
            !this.getEntityAt(x, y, z);
-}
+};
+
+Game.Map.prototype.setExplored = function(x, y, z, state) {
+    // Only update if the tile is within bounds
+    if (this.getTile(x, y, z) !== Game.Tile.nullTile) {
+        this._explored[z][x][y] = state;
+    }
+};
+
+Game.Map.prototype.isExplored = function(x, y, z) {
+    // Only return the value if within bounds
+    if (this.getTile(x, y, z) !== Game.Tile.nullTile) {
+        return this._explored[z][x][y];
+    } else {
+        return false;
+    }
+};
+
+Game.Map.prototype.setupFov = function() {
+    // Keep this in 'map' variable so that we don't lose it.
+    var map = this;
+    // Iterate through each depth level, setting up the field of vision
+    for (var z = 0; z < this._depth; z++) {
+        // We have to put the following code in it's own scope to prevent the
+        // depth variable from being hoisted out of the loop.
+        (function() {
+            // For each depth, we need to create a callback which figures out
+            // if light can pass through a given tile.
+            var depth = z;
+            map._fov.push(
+                new ROT.FOV.DiscreteShadowcasting(function(x, y) {
+                    return !map.getTile(x, y, depth).isBlockingLight();
+                }, {topology: 4}));
+        })();
+    }
+};
+
+Game.Map.prototype.getFov = function(depth) {
+    return this._fov[depth];
+};
 
 Game.Map.prototype.getEngine = function() {
     return this._engine;
-}
+};
 Game.Map.prototype.getEntities = function() {
     return this._entities;
-}
+};
 Game.Map.prototype.getEntityAt = function(x, y, z){
     // Iterate through all entities searching for one with
     // matching position
@@ -74,7 +128,7 @@ Game.Map.prototype.getEntityAt = function(x, y, z){
         }
     }
     return false;
-}
+};
 Game.Map.prototype.getEntitiesWithinRadius = function(centerX, centerY,
                                                       centerZ, radius) {
     results = [];
@@ -94,7 +148,7 @@ Game.Map.prototype.getEntitiesWithinRadius = function(centerX, centerY,
         }
     }
     return results;
-}
+};
 
 Game.Map.prototype.addEntity = function(entity) {
     // Make sure the entity's position is within bounds
@@ -112,7 +166,7 @@ Game.Map.prototype.addEntity = function(entity) {
     if (entity.hasMixin('Actor')) {
        this._scheduler.add(entity, true);
     }
-}
+};
 
 Game.Map.prototype.getRandomFloorPosition = function(z) {
     // Randomly generate a tile which is a floor
@@ -122,7 +176,7 @@ Game.Map.prototype.getRandomFloorPosition = function(z) {
         y = Math.floor(Math.random() * this._height);
     } while(!this.isEmptyFloor(x, y, z));
     return {x: x, y: y, z: z};
-}
+};
 
 Game.Map.prototype.addEntityAtRandomPosition = function(entity, z) {
     var position = this.getRandomFloorPosition(z);
@@ -130,7 +184,7 @@ Game.Map.prototype.addEntityAtRandomPosition = function(entity, z) {
     entity.setY(position.y);
     entity.setZ(position.z);
     this.addEntity(entity);
-}
+};
 
 Game.Map.prototype.removeEntity = function(entity) {
     // Find the entity in the list of entities if it is present
@@ -144,27 +198,4 @@ Game.Map.prototype.removeEntity = function(entity) {
     if (entity.hasMixin('Actor')) {
         this._scheduler.remove(entity);
     }
-}
-
-Game.Map.prototype.setupFov = function() {
-    // Keep this in 'map' variable so that we don't lose it.
-    var map = this;
-    // Iterate through each depth level, setting up the field of vision
-    for (var z = 0; z < this._depth; z++) {
-        // We have to put the following code in it's own scope to prevent the
-        // depth variable from being hoisted out of the loop.
-        (function() {
-            // For each depth, we need to create a callback which figures out
-            // if light can pass through a given tile.
-            var depth = z;
-            map._fov.push(
-                new ROT.FOV.DiscreteShadowcasting(function(x, y) {
-                    return !map.getTile(x, y, depth).isBlockingLight();
-                }, {topology: 4}));
-        })();
-    }
-}
-
-Game.Map.prototype.getFov = function(depth) {
-    return this._fov[depth];
-}
+};
